@@ -29,7 +29,7 @@
 -- If app property "LuaLoadAllEngineAPI" is FALSE, use this to load and check for required APIs
 -- This can improve performance of garbage collection
 
---_G.availableAPIs = require('Data/Database/helper/checkAPIs') -- can be used to adjust function scope of the module related on available APIs of the device
+_G.availableAPIs = require('Data/Database/helper/checkAPIs') -- can be used to adjust function scope of the module related on available APIs of the device
 -----------------------------------------------------------
 -- Logger
 _G.logger = Log.SharedLogger.create('ModuleLogger')
@@ -62,17 +62,18 @@ local function main()
   -- Can be used e.g. like this
   ----------------------------------------------------------------------------------------
 
-  -- _G.database_Model.doSomething() -- if you want to start a function
-  -- ...
+  --[[
+  CSK_Database.setDatabaseName('databaseName')
+  CSK_Database.setDatabaseLocation('/public/Databases/')
+  CSK_Database.setColumnsInfo('EventInfo text, MetaDataLocation text, ImageLocation text')
+  CSK_Database.createDatabase()
+  CSK_Database.setRegisteredEvent('TestApp.OnNewData')
+  ]]
+
   CSK_Database.pageCalled() -- Update UI
 
 end
 Script.register("Engine.OnStarted", main)
-
---OR
-
--- Call function after persistent data was loaded
---Script.register("CSK_Database.OnDataLoadedOnReboot", main)
 
 --**************************************************************************
 --**********************End Function Scope *********************************

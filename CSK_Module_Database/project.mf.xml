@@ -3,6 +3,7 @@
     <application name="CSK_Module_Database">
         <crown name="CSK_Module_Database">
             <desc>This is an automatically generated CROWN (description not necessary).</desc>
+            <serves/>
         </crown>
         <crown name="CSK_Database">
             <trait>released</trait>
@@ -47,6 +48,38 @@ ToDo +
                     <desc>Status of Admin userlevel. Used internally in combination with the CSK_UserManagement module if available.</desc>
                     <param desc="Status" multiplicity="1" name="status" type="bool"/>
                 </event>
+                <event name="OnNewTableContent">
+                    <desc>Notify content for dynamic table in UI</desc>
+                    <param desc="Result content of SQL query." multiplicity="1" name="content" type="string"/>
+                </event>
+                <event name="OnNewStatusDataSelection">
+                    <desc>Notify selected database entry.</desc>
+                    <param desc="Data of selection" multiplicity="1" name="selection" type="string"/>
+                </event>
+                <event name="OnNewStatusDatabaseName">
+                    <desc>Notify name of database.</desc>
+                    <param desc="Name of database" multiplicity="1" name="name" type="string"/>
+                </event>
+                <event name="OnNewStatusDatabaseLocation">
+                    <desc>Notify location path of database.</desc>
+                    <param desc="Path to database" multiplicity="1" name="path" type="string"/>
+                </event>
+                <event name="OnNewStatusColumnList">
+                    <desc>Notify current list of columns.</desc>
+                    <param desc="List of columns" multiplicity="1" name="list" type="string"/>
+                </event>
+                <event name="OnNewStatusRegisteredEvent">
+                    <desc>Notify registered event to receive new data.</desc>
+                    <param desc="Name of event" multiplicity="1" name="event" type="string"/>
+                </event>
+                <event name="OnNewStatusQuery">
+                    <desc>Notify current SQL query.</desc>
+                    <param desc="SQL query" multiplicity="1" name="query" type="string"/>
+                </event>
+                <event name="OnNewStatusActiveDatabaseName">
+                    <desc>Notify name of currently active database.</desc>
+                    <param desc="Name of database." multiplicity="1" name="name" type="string"/>
+                </event>
                 <function name="setParameterName">
                     <desc>Function to set the name of the parameters if saved/loaded via the CSK_PersistentData module.</desc>
                     <param desc="Name of the parameter." multiplicity="1" name="name" type="string"/>
@@ -65,6 +98,45 @@ ToDo +
                     <desc>Function to register "OnResume" of the module UI (only as helper function).</desc>
                     <return desc="Empty string (only needed to simplify binding)." multiplicity="1" name="empty" type="string"/>
                 </function>
+                <function name="setQuery">
+                    <desc>Function to set SQL query.</desc>
+                    <param desc="SQL query to call." multiplicity="1" name="query" type="string"/>
+                </function>
+                <function name="callQuery">
+                    <desc>Call SQL query.</desc>
+                    <param desc="Optional query. If not set, preset query will be used (see setQuery)." multiplicity="?" name="query" type="string"/>
+                    <return desc="Result of SQL query" multiplicity="*" name="queryResult" type="auto"/>
+                </function>
+                <function name="selectEntryViaUI">
+                    <desc>Function to select entry out of UI table.</desc>
+                    <param desc="Selection" multiplicity="1" name="selection" type="string"/>
+                </function>
+                <function name="deleteDataViaUI">
+                    <desc>Function to delete selected data via UI.</desc>
+                </function>
+                <function name="setRegisteredEvent">
+                    <desc>Functio to register to event to receive data for database.</desc>
+                    <param desc="Name of event." multiplicity="1" name="eventName" type="string"/>
+                </function>
+                <function name="setDatabaseName">
+                    <desc>Function to set name of database</desc>
+                    <param desc="Name of database" multiplicity="1" name="name" type="string"/>
+                </function>
+                <function name="setDatabaseLocation">
+                    <desc>Function to set location path of database.</desc>
+                    <param desc="Path to database" multiplicity="1" name="path" type="string"/>
+                </function>
+                <function name="createDatabase">
+                    <desc>Function to create new database based on preset database name and location.</desc>
+                    <return desc="Success" multiplicity="1" name="success" type="bool"/>
+                </function>
+                <function name="setColumnsInfo">
+                    <desc>Function to preset columns of database to create.</desc>
+                    <param desc="Column name and type definition like e.g. 'Event text, MetaDataLocation text,ImageLocation text'." multiplicity="1" name="columnDefinition" type="string"/>
+                </function>
+                <function name="loadDatabase">
+                    <desc>Function to load existing database.</desc>
+                </function>
             </serves>
         </crown>
         <meta key="author">SICK AG</meta>
@@ -73,7 +145,7 @@ ToDo +
         <meta key="copy-protected">false</meta>
         <meta key="read-protected">false</meta>
         <meta key="crown2-flow-engine">false</meta>
-        <meta key="LuaLoadAllEngineAPI">true</meta>
+        <meta key="LuaLoadAllEngineAPI">false</meta>
         <entry default="CSK_Module_Database.lua" path="scripts"/>
     </application>
 </manifest>

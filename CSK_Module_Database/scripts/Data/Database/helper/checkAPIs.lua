@@ -6,10 +6,16 @@
 local availableAPIs = {}
 
 local function loadAPIs()
-  CSK_ModuleName = require 'API.CSK_ModuleName'
+  CSK_Database = require 'API.CSK_Database'
 
   Container = require 'API.Container'
+  Database = {}
+  Database.SQL = {}
+  Database.SQL.SQLite = require 'API.Database.SQL.SQLite'
+  Database.SQL.Statement = require 'API.Database.SQL.Statement'
+  Database.Expressions = require 'API.Database.Expressions'
   Engine = require 'API.Engine'
+  File = require 'API.File'
   Log = require 'API.Log'
   Log.Handler = require 'API.Log.Handler'
   Log.SharedLogger = require 'API.Log.SharedLogger'

@@ -20,7 +20,18 @@ local database_Model
 
 -- ************************ UI Events Start ********************************
 
--- Script.serveEvent("CSK_Database.OnNewEvent", "Database_OnNewEvent")
+Script.serveEvent('CSK_Database.OnNewStatusActiveDatabaseName', 'Database_OnNewStatusActiveDatabaseName')
+Script.serveEvent('CSK_Database.OnNewStatusDatabaseName', 'Database_OnNewStatusDatabaseName')
+Script.serveEvent('CSK_Database.OnNewStatusDatabaseLocation', 'Database_OnNewStatusDatabaseLocation')
+
+Script.serveEvent('CSK_Database.OnNewStatusColumnList', 'Database_OnNewStatusColumnList')
+
+Script.serveEvent('CSK_Database.OnNewStatusRegisteredEvent', 'Database_OnNewStatusRegisteredEvent')
+
+Script.serveEvent('CSK_Database.OnNewStatusQuery', 'Database_OnNewStatusQuery')
+Script.serveEvent('CSK_Database.OnNewTableContent', 'Database_OnNewTableContent')
+Script.serveEvent('CSK_Database.OnNewStatusDataSelection', 'Database_OnNewStatusDataSelection')
+
 Script.serveEvent("CSK_Database.OnNewStatusLoadParameterOnReboot", "Database_OnNewStatusLoadParameterOnReboot")
 Script.serveEvent("CSK_Database.OnPersistentDataModuleAvailable", "Database_OnPersistentDataModuleAvailable")
 Script.serveEvent("CSK_Database.OnNewParameterName", "Database_OnNewParameterName")
@@ -31,17 +42,7 @@ Script.serveEvent('CSK_Database.OnUserLevelMaintenanceActive', 'Database_OnUserL
 Script.serveEvent('CSK_Database.OnUserLevelServiceActive', 'Database_OnUserLevelServiceActive')
 Script.serveEvent('CSK_Database.OnUserLevelAdminActive', 'Database_OnUserLevelAdminActive')
 
--- ...
-
 -- ************************ UI Events End **********************************
-
---[[
---- Some internal code docu for local used function
-local function functionName()
-  -- Do something
-
-end
-]]
 
 --**************************************************************************
 --********************** End Global Scope **********************************
@@ -108,12 +109,23 @@ local function handleOnExpiredTmrDatabase()
 
   updateUserLevel()
 
-  -- Script.notifyEvent("Database_OnNewEvent", false)
+  Script.notifyEvent("Database_OnNewStatusActiveDatabaseName", database_Model.currentActiveDatabase)
+
+  Script.notifyEvent("Database_OnNewStatusColumnList", database_Model.databaseColumnsInfo)
+  Script.notifyEvent("Database_OnNewStatusRegisteredEvent", database_Model.parameters.registeredEvent)
+
+  Script.notifyEvent("Database_OnNewStatusDatabaseName", database_Model.parameters.nameOfDatabase)
+  Script.notifyEvent("Database_OnNewStatusDatabaseLocation", database_Model.parameters.locationOfDatabase)
+
+  Script.notifyEvent("Database_OnNewStatusQuery", database_Model.query)
+
+  local jsonString = database_Model.helperFuncs.createQueryJsonList(database_Model.databaseColumns, database_Model.queryContent)
+  Script.notifyEvent('Database_OnNewTableContent', jsonString)
 
   Script.notifyEvent("Database_OnNewStatusLoadParameterOnReboot", database_Model.parameterLoadOnReboot)
   Script.notifyEvent("Database_OnPersistentDataModuleAvailable", database_Model.persistentModuleAvailable)
   Script.notifyEvent("Database_OnNewParameterName", database_Model.parametersName)
-  -- ...
+
 end
 Timer.register(tmrDatabase, "OnExpired", handleOnExpiredTmrDatabase)
 
@@ -126,20 +138,156 @@ local function pageCalled()
 end
 Script.serveFunction("CSK_Database.pageCalled", pageCalled)
 
---[[
-local function setSomething(value)
-  _G.logger:info(nameOfModule .. ": Set new value = " .. value)
-  database_Model.varA = value
+local function setDatabaseName(name)
+  database_Model.parameters.nameOfDatabase = name
+  database_Model.query = 'select * from ' .. name
+  handleOnExpiredTmrDatabase()
 end
-Script.serveFunction("CSK_Database.setSomething", setSomething)
-]]
+Script.serveFunction('CSK_Database.setDatabaseName', setDatabaseName)
+
+local function setDatabaseLocation(path)
+  database_Model.parameters.locationOfDatabase = path
+  database_Model.parameters.databasePath = database_Model.parameters.locationOfDatabase .. database_Model.parameters.nameOfDatabase .. '.db'
+end
+Script.serveFunction('CSK_Database.setDatabaseLocation', setDatabaseLocation)
+
+local function createDatabase()
+  local suc = database_Model.createDatabase()
+  database_Model.queryContent = {}
+  handleOnExpiredTmrDatabase()
+  return suc
+end
+Script.serveFunction('CSK_Database.createDatabase', createDatabase)
+
+local function loadDatabase()
+  if File.exists(database_Model.parameters.locationOfDatabase .. database_Model.parameters.nameOfDatabase .. ".db") then
+    database_Model.parameters.databasePath = database_Model.parameters.locationOfDatabase .. database_Model.parameters.nameOfDatabase .. '.db'
+    database_Model.loadDatabase()
+    database_Model.queryContent = {}
+    database_Model.query = 'select * from ' .. database_Model.parameters.nameOfDatabase
+    handleOnExpiredTmrDatabase()
+  else
+    _G.logger:info(nameOfModule .. ": Database does not exist")
+  end
+end
+Script.serveFunction('CSK_Database.loadDatabase', loadDatabase)
+
+local function setQuery(query)
+  _G.logger:fine(nameOfModule .. ": Set query to: " .. query)
+  database_Model.query = query
+end
+Script.serveFunction('CSK_Database.setQuery', setQuery)
+
+--- Function to get the current selected entry
+---@param selection string Full text of selection
+---@param pattern string Pattern to search for
+local function setSelection(selection, pattern)
+  local selected
+  if selection == "" then
+    selected = ''
+  else
+    local _, pos = string.find(selection, pattern)
+    if pos == nil then
+      _G.logger:fine(nameOfModule .. ": Did not find selection")
+      selected = ''
+    else
+      pos = tonumber(pos)
+      local endPos = string.find(selection, '"', pos+1)
+      selected = string.sub(selection, pos+1, endPos-1)
+
+      if selected == nil then
+        selected = ''
+      end
+    end
+  end
+  return selected
+end
+
+local function selectEntryViaUI(selection)
+  database_Model.selection = selection
+  Script.notifyEvent('Database_OnNewStatusDataSelection', selection)
+end
+Script.serveFunction('CSK_Database.selectEntryViaUI', selectEntryViaUI)
+
+local function callQuery(query)
+  if query then
+    database_Model.queryContent = database_Model.exec(query)
+  else
+    database_Model.queryContent = database_Model.exec(database_Model.query)
+  end
+  if not database_Model.queryContent then
+    database_Model.queryContent = {}
+  end
+
+  local jsonString = database_Model.helperFuncs.createQueryJsonList(database_Model.databaseColumns, database_Model.queryContent)
+  Script.notifyEvent('Database_OnNewTableContent', jsonString)
+
+  return database_Model.queryContent
+end
+Script.serveFunction('CSK_Database.callQuery', callQuery)
+
+local function deleteDataViaUI()
+  local pos = setSelection(database_Model.selection, '"data1":"')
+  if tonumber(pos) then
+    callQuery("DELETE FROM " .. database_Model.parameters.nameOfDatabase .. " WHERE ID='" .. tostring(pos) .. "'")
+    callQuery("select * from " .. database_Model.parameters.nameOfDatabase)
+  else
+    _G.logger:fine(nameOfModule .. ": No selection")
+  end
+end
+Script.serveFunction('CSK_Database.deleteDataViaUI', deleteDataViaUI)
+
+local function setRegisteredEvent(eventName)
+  local eventExists = Script.isServedAsEvent(eventName)
+  if eventExists then
+    Script.deregister(database_Model.parameters.registeredEvent, database_Model.insert)
+    database_Model.parameters.registeredEvent = eventName
+    Script.register(eventName, database_Model.insert)
+  else
+    _G.logger:fine(nameOfModule .. ": Event does not exists")
+  end
+  handleOnExpiredTmrDatabase()
+end
+Script.serveFunction('CSK_Database.setRegisteredEvent', setRegisteredEvent)
+
+local function setColumnsInfo(columnDefinition)
+  database_Model.databaseColumnsInfo = columnDefinition
+
+  Script.releaseObject(database_Model.databaseColumns)
+  database_Model.databaseColumns = {}
+
+  local tempColumn
+  local startPos = 0
+  local endPos = string.find(columnDefinition, ' ')
+  if endPos then
+    tempColumn = string.sub(columnDefinition, startPos, endPos-1)
+
+    table.insert(database_Model.databaseColumns, tempColumn)
+
+    while true do
+      startPos = string.find(columnDefinition, ', ', endPos+1)
+      if startPos then
+        endPos = string.find(columnDefinition, ' ', startPos+2)
+        if endPos then
+          tempColumn = string.sub(columnDefinition, startPos+2, endPos-1)
+          table.insert(database_Model.databaseColumns, tempColumn)
+        else
+          break
+        end
+      else
+        break
+      end
+    end
+  end
+end
+Script.serveFunction('CSK_Database.setColumnsInfo', setColumnsInfo)
 
 -- *****************************************************************
 -- Following function can be adapted for CSK_PersistentData module usage
 -- *****************************************************************
 
 local function setParameterName(name)
-  _G.logger:info(nameOfModule .. ": Set parameter name: " .. tostring(name))
+  _G.logger:fine(nameOfModule .. ": Set parameter name: " .. tostring(name))
   database_Model.parametersName = name
 end
 Script.serveFunction("CSK_Database.setParameterName", setParameterName)
@@ -148,7 +296,7 @@ local function sendParameters()
   if database_Model.persistentModuleAvailable then
     CSK_PersistentData.addParameter(database_Model.helperFuncs.convertTable2Container(database_Model.parameters), database_Model.parametersName)
     CSK_PersistentData.setModuleParameterName(nameOfModule, database_Model.parametersName, database_Model.parameterLoadOnReboot)
-    _G.logger:info(nameOfModule .. ": Send Database parameters with name '" .. database_Model.parametersName .. "' to CSK_PersistentData module.")
+    _G.logger:fine(nameOfModule .. ": Send Database parameters with name '" .. database_Model.parametersName .. "' to CSK_PersistentData module.")
     CSK_PersistentData.saveData()
   else
     _G.logger:warning(nameOfModule .. ": CSK_PersistentData module not available.")
@@ -160,11 +308,13 @@ local function loadParameters()
   if database_Model.persistentModuleAvailable then
     local data = CSK_PersistentData.getParameter(database_Model.parametersName)
     if data then
-      _G.logger:info(nameOfModule .. ": Loaded parameters from CSK_PersistentData module.")
+      _G.logger:fine(nameOfModule .. ": Loaded parameters from CSK_PersistentData module.")
       database_Model.parameters = database_Model.helperFuncs.convertContainer2Table(data)
-      -- If something needs to be configured/activated with new loaded data, place this here:
-      -- ...
-      -- ...
+
+      if database_Model.parameters.nameOfDatabase ~= '' then
+        loadDatabase()
+        setRegisteredEvent(database_Model.parameters.registeredEvent)
+      end
 
       CSK_Database.pageCalled()
     else
@@ -178,7 +328,7 @@ Script.serveFunction("CSK_Database.loadParameters", loadParameters)
 
 local function setLoadOnReboot(status)
   database_Model.parameterLoadOnReboot = status
-  _G.logger:info(nameOfModule .. ": Set new status to load setting on reboot: " .. tostring(status))
+  _G.logger:fine(nameOfModule .. ": Set new status to load setting on reboot: " .. tostring(status))
 end
 Script.serveFunction("CSK_Database.setLoadOnReboot", setLoadOnReboot)
 

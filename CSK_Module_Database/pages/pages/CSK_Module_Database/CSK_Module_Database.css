@@ -5,5 +5,6 @@
   margin: 6px;
 }
 
-.myCustomCssClass_CSK_Module_Database {
+.myMaxHeightCssClass_CSK_Module_Database {
+  max-height: 500px;
 }
