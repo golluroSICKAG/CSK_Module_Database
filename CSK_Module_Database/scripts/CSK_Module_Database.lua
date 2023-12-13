@@ -68,6 +68,9 @@ local function main()
   CSK_Database.setColumnsInfo('EventInfo text, MetaDataLocation text, ImageLocation text')
   CSK_Database.createDatabase()
   CSK_Database.setRegisteredEvent('TestApp.OnNewData')
+
+  CSK_Database.setQuery('select * from databaseName')
+  CSK_Database.callQuery()
   ]]
 
   CSK_Database.pageCalled() -- Update UI

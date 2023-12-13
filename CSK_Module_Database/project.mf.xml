@@ -7,15 +7,19 @@
         </crown>
         <crown name="CSK_Database">
             <trait>released</trait>
-            <desc>Please fill in information regarding: What is the idea of this module and its features? +
-How to use this module in general.... like: + 
-{empty} + 
-Typically the features of this module are used like this (check also main script of this module): +
+            <desc>Module to log data wihtin a SQLite database. +
+This can be useful to create relations between different data and to filter for specific data entries.
+{empty} +
+Typically the feature of this module is used like this (check also main script of this module): +
+{empty} +
 **1) Setup** +
-ToDo +
-{empty} + 
-**2) Something else...** +
-</desc>
+- Set database name and storing location via 'setDatabaseName' / 'setDatabaseLocation'. +
+- Predefine table columns via 'setColumnsInfo'. +
+- Now create new database via 'createDatabase'. +
+- Set an event to receive data to store within the database. (event should provide as much parameters as table columns were defined). +
+{empty} +
+**2) Usage** +
+Predefine a query via 'setQuery' and call it via 'callQuery'. +</desc>
             <serves>
                 <event name="OnNewStatusLoadParameterOnReboot">
                     <desc>Notify status if parameters should be loaded on app/device boot up.</desc>
@@ -104,7 +108,7 @@ ToDo +
                 </function>
                 <function name="callQuery">
                     <desc>Call SQL query.</desc>
-                    <param desc="Optional query. If not set, preset query will be used (see setQuery)." multiplicity="?" name="query" type="string"/>
+                    <param desc="Optional query. If not set, preset query will be used (see 'setQuery')." multiplicity="?" name="query" type="string"/>
                     <return desc="Result of SQL query" multiplicity="*" name="queryResult" type="auto"/>
                 </function>
                 <function name="selectEntryViaUI">
