@@ -5,9 +5,8 @@ Module to provide SQLite database functionality.
 ![](./docu/media/UI_Screenshot.png)
 
 ## How to Run
-
-[***...please fill with informations...***]  
-For further information check out the [documentation](https://raw.githack.com/SICKAppSpaceCodingStarterKit/CSK_Module_Database/main/docu/CSK_Module_Database.html) in the folder "docu".
+The app includes an intuitive GUI to setup the database.  
+For further information check out the [documentation](https://raw.githack.com/golluroSICKAG/CSK_Module_Database/main/docu/CSK_Module_Database.html) in the folder "docu".
 
 ## Information
 
